@@ -1,9 +1,10 @@
 using DattingApp.API.Models;
 using DattingApp.API.Repositories.Contracts;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authorization;
 namespace DattingApp.API.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class ValuesController : ControllerBase
@@ -17,6 +18,7 @@ public class ValuesController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IEnumerable<Value>> Get()
     {
         return await _valuesRepository.GetAllValuesAsync();

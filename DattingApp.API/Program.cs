@@ -1,7 +1,11 @@
 using DattingApp.API.Data;
 using DattingApp.API.DbContexts;
+using DattingApp.API.Repositories;
 using DattingApp.API.Repositories.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,11 +15,25 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors();
+
 builder.Services.AddScoped<IValuesRepository, ValuesRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(opt => {
+                        opt.TokenValidationParameters = new ()
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                                builder.Configuration.GetSection("AppSettings:Token").Value)),
+                            ValidateIssuer = false,
+                            ValidateAudience = false
+                        };
+                    });
+
 builder.Services.AddDbContext<DataContext>(
     opt => opt.UseSqlite(builder
     .Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddCors();
 
 var app = builder.Build();
 
@@ -34,6 +52,7 @@ app.UseCors(p => p
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
